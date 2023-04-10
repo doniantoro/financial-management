@@ -1,0 +1,70 @@
+version: '3.3'
+
+services:
+  apps:
+    image: multi-finance:1.0
+    container_name: apps
+    restart: always
+    ports:
+      - 8092:8092
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - messaging
+
+  mysql:
+    image: mariadb
+    container_name: mysql
+    hostname: mariadb
+    restart: always
+    environment:
+      - MARIADB_USER=root
+      - MARIADB_PASSWORD=dev
+      - MARIADB_ROOT_PASSWORD=dev
+    ports:
+      - 3304:3306
+    volumes:
+      - internal-db:/var/lib/mysql
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: 'cache'
+    hostname: redis
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server
+    volumes:
+      - cache:/data
+ 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: 'phpmyadmin'
+    links:
+      - mysql:db
+    restart: always
+    ports:
+      - '8080:80'
+    environment:
+      - MYSQL_ROOT_PASSWORD=dev
+    
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=ikn
+    ports:
+      - "5432:5432" 
+
+
+volumes:
+  cache:
+  internal-db:
+  rabbitmq_data:
+    driver: local
+
+networks: 
+    messaging:
+      driver: bridge
